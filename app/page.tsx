@@ -18,7 +18,7 @@ async function FetchStockData() {
       
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-100">
+          <thead className="text-black bg-white">
             <tr>
               <th className="p-3">Stock A</th>
               <th className="p-3">Stock B</th>
