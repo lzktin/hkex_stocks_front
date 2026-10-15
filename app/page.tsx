@@ -53,11 +53,7 @@ function TableSkeleton() {
 export default function HomePage() {
   return (
     <main className="p-8 max-w-4xl mx-auto font-sans">
-      <h1 className="text-3xl font-bold mb-2">HKEX Equity Correlations</h1>
-      <p className="text-gray-600 mb-6">
-        Top correlated stock pairs fetched live from Supabase.
-      </p>
-
+      
       {/* The Suspense boundary catches the uncached fetch call */}
       <Suspense fallback={<TableSkeleton />}>
         <FetchStockData />
