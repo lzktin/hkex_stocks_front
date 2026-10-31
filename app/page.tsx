@@ -71,13 +71,13 @@ async function FetchBottomCorrelated() {
 function GetCorrelations({ data }: { data: StockCorrelation[] }) {
   return (
     <div className="h-full w-full overflow-y-auto bg-white border border-t-0 rounded-b-lg">
-        <table className="text-left w-full border-collapse table-auto">
+        <table className="text-left w-full border-collapse table-fixed">
           <tbody className="text-[12px] divide-y divide-slate-100">
             {data?.map((row) => (
               <tr key={row.code} className="hover:bg-slate-50 transition-colors">
-                <td className="p-2 font-mono font-medium text-blue-600">{row.code}</td>
-                <td className="p-2 text-slate-600">{row.name}</td>
-                <td className="p-2 font-mono">{row.pearson_corr.toFixed(3)}</td>
+                <td className="p-2 w-[30%] font-mono font-medium text-blue-600">{row.code}</td>
+                <td className="p-2 w-[40%] text-slate-600">{row.name}</td>
+                <td className="p-2 2-[30%] font-mono">{row.pearson_corr.toFixed(3)}</td>
               </tr>
             ))}
           </tbody>
@@ -97,14 +97,14 @@ function LoadingScreen() {
 export default function HomePage() {
   return (
     <>
-      <header className="pt-4 px-4 h-16 flex-none">
+      <header className="pt-4 px-6 h-16 flex-none">
         <div className="border rounded p-2">
           <input type="search" placeholder="Search stock ticker..." className="bg-transparent outline-none w-full" />
         </div>
       </header>
       
-      <main className="grid grid-cols-1 md:grid-cols-[7fr_3fr] h-auto md:h-[calc(100vh-80px)] py-2 px-4 gap-4">
-        <div className = "h-full min-h-0 flex flex-col">
+      <main className="grid grid-cols-1 md:grid-cols-[7fr_3fr] h-auto md:h-[calc(100vh-80px)] py-2 px-6 gap-4">
+        <div className = "h-full min-h-90 md:pr-0 flex flex-col">
           <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1 rounded-t-lg">Daily Returns for Tencent Holdings (Past 365 Days)</h2>
           <div className = "flex-1 min-h-0 w-full">
             <Suspense fallback={<LoadingScreen />}>
@@ -113,7 +113,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="h-full min-h-0 pl-2 grid grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
+        <div className="h-full min-h-0 grid grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
             
             <div className="h-full min-h-0 flex flex-col">
               <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1 rounded-t-lg">Top Correlated Stocks</h2>
