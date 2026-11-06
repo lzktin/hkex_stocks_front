@@ -13,7 +13,6 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
       <div className="w-full h-full min-h-75">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            {/* Light grid background matching your slate theme */}
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
             
             <XAxis 
@@ -37,9 +36,10 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
             <Line 
               type="monotone" 
               dataKey="daily_return" 
-              stroke="#2563eb" // Matches your blue-600 Tailwind theme
+              stroke="#2563eb" 
               strokeWidth={2} 
-              dot={false} // Hides dots for a cleaner financial line look
+              dot={true} 
+              isAnimationActive={false}
             />
           </LineChart>
         </ResponsiveContainer>

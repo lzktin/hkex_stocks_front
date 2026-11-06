@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS stock_lookup_fuzzy_idx;
