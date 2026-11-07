@@ -22,83 +22,19 @@ interface StockCorrelation {
   pearson_corr: number; 
 }
 
-async function FetchDailyReturns() {
-  const { data: returns, error } = await supabase
-    .from('daily_returns')
-    .select('date, daily_return')
-    .eq('ticker', '0700.HK')
-    .order('date', { ascending: true })
-
-  if (error) return <div className="text-xs text-red-500 p-2">Error loading stock data: {error.message}</div>;
-
-  return <DrawChart data={returns || []} />;
-}
-
-async function FetchTopCorrelated() {
-  const { data: correlations, error } = await supabase
-    .from('stock_correlations')
-    .select('code, name, pearson_corr')
-    .eq('key_stock', '0700.HK')
-    .order('pearson_corr', { ascending: false })
-    .limit(10);
-
-  if (error) return <div className="text-xs text-red-500 p-2">Error loading stock data: {error.message}</div>;
-
-  return <GetCorrelations data={correlations} />;
-}
-
-async function FetchBottomCorrelated() {
-  const { data: correlations, error } = await supabase
-    .from('stock_correlations')
-    .select('code, name, pearson_corr')
-    .eq('key_stock', '0700.HK')
-    .order('pearson_corr', { ascending: true })
-    .limit(10);
-
-  if (error) return <div className="text-xs text-red-500 p-2">Error loading stock data: {error.message}</div>;
-
-  return <GetCorrelations data={correlations} />;
-}
-
-function GetCorrelations({ data }: { data: StockCorrelation[] }) {
-  return (
-    <div className="h-full w-full overflow-y-auto bg-white border border-t-0 rounded-b-lg">
-        <table className="text-left w-full border-collapse table-fixed">
-          <tbody className="text-[12px] divide-y divide-slate-100">
-            {data?.map((row) => (
-              <tr key={row.code} className="hover:bg-slate-50 transition-colors">
-                <td className="p-2 w-[30%] font-mono font-medium text-blue-600">{row.code}</td>
-                <td className="p-2 w-[40%] text-slate-600">{row.name}</td>
-                <td className="p-2 2-[30%] font-mono">{row.pearson_corr.toFixed(3)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-    </div>
-  );
-}
-
-function LoadingScreen() {
-  return (
-    <div className="h-full p-8 text-center text-gray-500 font-medium animate-pulse bg-gray-50 border border-t-0">
-      Loading HKEX stock correlation data...
-    </div>
-  );
-}
-
 export default async function HomePage({
   searchParams,
 }: {
   searchParams: Promise<{ ticker?: string }>;
 }) {
 
-  const params = await searchParams;
-  const ticker = params.ticker || '0700.HK';
+  const userInput = await searchParams;
+  const ticker = userInput.ticker || '0700.HK';
 
   return (
     <>
       <header className="pt-5 px-4 h-20 flex-none">
-        <SearchBar search={ticker} />
+        <SearchBar />
       </header>
       
       <main className="grid grid-cols-1 min-h-90 px-4 md:px-0 md:grid-cols-[7fr_3fr] md:h-[85vh] gap-4">
@@ -108,7 +44,7 @@ export default async function HomePage({
           </h2>
           <div className="flex-1 w-full">
             <Suspense fallback={<LoadingScreen />}>
-              <DynamicDailyReturns ticker={ticker} />
+              <GetDailyReturns ticker={ticker} />
             </Suspense>
           </div>
         </div>
@@ -118,7 +54,7 @@ export default async function HomePage({
               <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1 rounded-t-lg">Top Correlated Stocks</h2>
               <div className="flex-1 min-h-0 w-full">
                 <Suspense fallback={<LoadingScreen />}>
-                  <DynamicCorrelations ticker={ticker} ascending={false} />
+                  <GetStockCorrelations ticker={ticker} ascending={false} />
                 </Suspense>
               </div>
             </div>
@@ -127,7 +63,7 @@ export default async function HomePage({
               <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1 rounded-t-lg">Bottom Correlated Stocks</h2>
               <div className="flex-1 min-h-0 w-full">
                 <Suspense fallback={<LoadingScreen />}>
-                  <DynamicCorrelations ticker={ticker} ascending={true} />
+                  <GetStockCorrelations ticker={ticker} ascending={true} />
                 </Suspense>
               </div>  
             </div>
@@ -138,7 +74,7 @@ export default async function HomePage({
 }
 
 // Data fetchers updated to accept the dynamic ticker prop
-async function DynamicDailyReturns({ ticker }: { ticker: string }) {
+async function GetDailyReturns({ ticker }: { ticker: string }) {
   const { data: returns, error } = await supabase
     .from('daily_returns')
     .select('date, daily_return')
@@ -150,7 +86,7 @@ async function DynamicDailyReturns({ ticker }: { ticker: string }) {
   return <DrawChart data={returns || []} />;
 }
 
-async function DynamicCorrelations({ ticker, ascending }: { ticker: string; ascending: boolean }) {
+async function GetStockCorrelations({ ticker, ascending }: { ticker: string; ascending: boolean }) {
   const { data: correlations, error } = await supabase
     .from('stock_correlations')
     .select('code, name, pearson_corr')
@@ -179,6 +115,14 @@ async function DynamicCorrelations({ ticker, ascending }: { ticker: string; asce
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <div className="h-full p-8 rounded-lg text-center text-gray-500 font-medium animate-pulse bg-gray-50 border border-t-0">
+      Loading HKEX stock correlation data...
     </div>
   );
 }
