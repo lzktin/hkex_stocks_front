@@ -31,6 +31,12 @@ export default async function HomePage({
   const userInput = await searchParams;
   const ticker = userInput.ticker || '0700.HK';
 
+  const { data: extractedStock } = await supabase
+    .from('stock_lookup')
+    .select('*')
+    .eq('code', ticker)
+    .single();
+
   return (
     <>
       <header className="pt-5 px-4 h-20 flex-none">
@@ -38,9 +44,14 @@ export default async function HomePage({
       </header>
       
       <main className="grid grid-cols-1 min-h-90 px-4 md:px-0 md:grid-cols-[7fr_3fr] md:h-[85vh] gap-4">
-        <div className="h-full flex flex-col py-4 md:pl-4">
-          <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1 rounded-t-lg">
-            Daily Returns for {ticker} (Past 365 Days)
+        <div className="h-full flex flex-col py-2 md:pl-4">
+          <h2 className="flex justify-between items-center gap-2 border px-2 bg-blue-200 text-sm py-1 rounded-t-lg">
+            <span className="bg-black text-white font-bold px-2 py-0.5 rounded tracking-wider">
+              {extractedStock.short_name}
+            </span>
+            <span className="text-slate-500 font-semibold font-mono">
+              ({extractedStock.code})
+            </span>
           </h2>
           <div className="flex-1 w-full">
             <Suspense fallback={<LoadingScreen />}>
@@ -49,9 +60,11 @@ export default async function HomePage({
           </div>
         </div>
 
-        <div className="h-full min-h-75 grid grid-rows-[1fr_1fr] py-4 md:pr-4 gap-4">
+        <div className="h-full min-h-75 grid grid-rows-[1fr_1fr] py-2 md:pr-4 gap-4">
             <div className="h-full min-h-0 flex flex-col">
-              <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1 rounded-t-lg">Top Correlated Stocks</h2>
+              <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1.5 rounded-t-lg">
+                  Top Correlated
+              </h2>
               <div className="flex-1 min-h-0 w-full">
                 <Suspense fallback={<LoadingScreen />}>
                   <GetStockCorrelations ticker={ticker} ascending={false} />
@@ -60,7 +73,9 @@ export default async function HomePage({
             </div>
 
             <div className="h-full min-h-0 flex flex-col">
-              <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1 rounded-t-lg">Bottom Correlated Stocks</h2>
+              <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1.5 rounded-t-lg">
+                Bottom Correlated
+              </h2>
               <div className="flex-1 min-h-0 w-full">
                 <Suspense fallback={<LoadingScreen />}>
                   <GetStockCorrelations ticker={ticker} ascending={true} />
@@ -101,7 +116,7 @@ async function GetStockCorrelations({ ticker, ascending }: { ticker: string; asc
       <table className="text-left w-full border-collapse table-fixed">
         <tbody className="text-[12px] divide-y divide-slate-100">
           {correlations?.map((row) => (
-            <tr key={row.code} className="hover:bg-slate-300 align-top text-left">
+            <tr key={row.code} className="hover:bg-slate-300 align-top text-left cursor-pointer">
               <td className="py-2 pl-2 font-mono font-medium text-blue-600 w-[28%]">
                 {row.code}
               </td>
