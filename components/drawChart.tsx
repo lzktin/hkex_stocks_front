@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
+const PIXELS_PER_FRAME = 16;
+const GRAPH_PADDING = 16;
+
 interface StockReturn {
   date: string;
   daily_return: number;
@@ -12,9 +15,9 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
   const [startX, setStartX] = useState(0);
   const [endX, setEndX] = useState(data.length-1);
 
-  const mouseDrag = useRef(false);
+  const graphScrolling = useRef(false);
   const mouseX = useRef(0);
-  const mouseWindow = useRef({ startX: 0, endX: 0 });
+  const windowOnClick = useRef({ startX: 0, endX: 0 });
 
   const currentDomain = useRef({startX: 0, endX: data.length-1});
   currentDomain.current = { startX, endX };
@@ -23,6 +26,11 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
   const currentRange = [-maxY, maxY];
   const yTicks = [-maxY, 2/3 * -maxY, 1/3 * -maxY, 0, 1/3 * maxY, 2/3 * maxY, maxY];
 
+  const mouseSpeed = useRef(0);
+  const prevMouseX = useRef(0);
+  const prevTime = useRef(0);
+  const animId = useRef<number | null>(null);
+
   const graphContainer = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,6 +38,11 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
     if (currentContainer == null)
       return;
 
+    if (animId.current !== null) {
+      cancelAnimationFrame(animId.current);
+      animId.current = null;
+    }
+    // Graph-only listener
     const pinchToZoom = (e: WheelEvent) => {
       e.preventDefault();
 
@@ -50,31 +63,94 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
       setStartX(newStart);
       setEndX(newEnd);
     }
-
+    // Graph-only listener
     const detectMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) 
         return;
 
-      mouseDrag.current = true;
+      if (animId.current != null) {
+        cancelAnimationFrame(animId.current);
+        animId.current = null;
+      }
+      prevTime.current = performance.now();
+
+      graphScrolling.current = true;
       mouseX.current = e.clientX;
-      mouseWindow.current = { ...currentDomain.current };
+      prevMouseX.current = e.clientX;
+      mouseSpeed.current = 0;
+      windowOnClick.current = { ...currentDomain.current };
     };
-
+    
+    // Entire window listener
     const detectMouseUp = () => {
-      mouseDrag.current = false;
-    }
-
-    const dragToScroll = (e: MouseEvent) => {
-      if (mouseDrag.current == false)
+      // Prevent false trigger outside graph
+      if (graphScrolling.current == false)
         return;
+      graphScrolling.current = false;
+
+      const friction = 0.92;
+      let currentSpeed = mouseSpeed.current * PIXELS_PER_FRAME;
+      if (Math.abs(currentSpeed) < 0.5) 
+        return;
+
+      const step = () => {
+        currentSpeed *= friction;
+
+        if (Math.abs(currentSpeed) < 0.1) {
+          animId.current = null;
+          return;
+        }
+
+        const { startX, endX } = currentDomain.current;
+        const range = endX - startX;
+        const chartWidth = currentContainer.getBoundingClientRect().width - (GRAPH_PADDING * 2);
+
+        const sliding_offset = -(currentSpeed / (chartWidth / range));
+
+        let newStart = startX + sliding_offset;
+        let newEnd = endX + sliding_offset;
+
+        if (newStart < 0) {
+          newStart = 0;
+          newEnd = range;
+          currentSpeed = 0;
+        } else if (newEnd >= data.length - 1) {
+          newEnd = data.length - 1;
+          newStart = Math.max(0, (data.length - 1) - range);
+          currentSpeed = 0;
+        }
+
+        setStartX(newStart);
+        setEndX(newEnd);
+
+        animId.current = requestAnimationFrame(step);
+      };
+
+      animId.current = requestAnimationFrame(step);
+
+    }
+    // This is a window listener
+    const dragToScroll = (e: MouseEvent) => {
+      if (graphScrolling.current == false)
+        return;
+
+      const now = performance.now();
+      const dx = e.clientX - prevMouseX.current;
+      const dt = now - prevTime.current;
+
+      if (dt > 0) {
+        mouseSpeed.current = dx / dt; // 
+      }
+
+      prevMouseX.current = e.clientX;
+      prevTime.current = now;
       
-      const { startX, endX } = mouseWindow.current;
+      const { startX, endX } = windowOnClick.current;
       const range = endX - startX;
       const mouseMove = e.clientX - mouseX.current;
 
       const currentDimension = currentContainer.getBoundingClientRect();
-      const padding = 16;
-      const chartWidth = currentDimension.width - (padding * 2);
+      const chartWidth = currentDimension.width - (GRAPH_PADDING * 2);
 
       const offset = -Math.round(mouseMove / (chartWidth / range));
 
@@ -99,6 +175,10 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
     window.addEventListener('mousemove', dragToScroll);
 
     return () => {
+      if (animId.current !== null) {
+        cancelAnimationFrame(animId.current);
+      }
+
       currentContainer.removeEventListener('wheel', pinchToZoom);
       currentContainer.removeEventListener('mousedown', detectMouseDown);
       window.removeEventListener('mouseup', detectMouseUp);
@@ -154,7 +234,7 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
               dataKey="daily_return" 
               stroke="#2563eb" 
               strokeWidth={2} 
-              dot={true} 
+              dot={false} 
               isAnimationActive={false}
             />
           </LineChart>
