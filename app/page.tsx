@@ -65,7 +65,7 @@ export default async function HomePage({
               <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1.5 rounded-t-lg">
                   Top Correlated
               </h2>
-              <div className="min-h-0 w-full">
+              <div className="flex-1 min-h-0 w-full">
                 <Suspense fallback={<LoadingScreen />}>
                   <GetStockCorrelations ticker={ticker} ascending={false} />
                 </Suspense>
@@ -76,7 +76,7 @@ export default async function HomePage({
               <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1.5 rounded-t-lg">
                 Bottom Correlated
               </h2>
-              <div className="min-h-0 w-full">
+              <div className="flex-1 min-h-0 w-full">
                 <Suspense fallback={<LoadingScreen />}>
                   <GetStockCorrelations ticker={ticker} ascending={true} />
                 </Suspense>
@@ -136,7 +136,7 @@ async function GetStockCorrelations({ ticker, ascending }: { ticker: string; asc
 
 function LoadingScreen() {
   return (
-    <div className="h-full p-8 rounded-lg text-center text-gray-500 font-medium animate-pulse bg-gray-50 border border-t-0">
+    <div className="h-full p-8 rounded-lg rounded-t-none text-center text-gray-500 font-medium animate-pulse bg-gray-50 border border-t-0">
       Loading HKEX stock correlation data...
     </div>
   );
