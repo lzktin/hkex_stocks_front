@@ -5,6 +5,8 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianG
 
 const PIXELS_PER_FRAME = 16;
 const GRAPH_PADDING = 16;
+const MINIMUM_POINTS = 10;
+const ZOOM_FACTOR = 0.15;
 
 interface StockReturn {
   date: string;
@@ -33,6 +35,25 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
 
   const graphContainer = useRef<HTMLDivElement>(null);
 
+  // Zoom helper
+  const zoom = (zoomIn : boolean) => {
+    const { startX, endX } = currentDomain.current;
+    const range = endX-startX;
+    const center = startX + Math.round(range/2);
+
+    let newRange: number;
+    if (zoomIn) {
+      newRange = Math.max(MINIMUM_POINTS, Math.floor(range * (1-ZOOM_FACTOR)));
+    }
+    else {
+      newRange = Math.min(data.length-1, Math.floor(range * (1+ZOOM_FACTOR)));
+    }
+    const newStart = Math.max(0, Math.floor(center-newRange/2));
+    const newEnd = Math.min(data.length-1, Math.ceil(center+newRange/2));
+    setStartX(newStart);
+    setEndX(newEnd);
+  }
+
   useEffect(() => {
     const currentContainer = graphContainer.current;
     if (currentContainer == null)
@@ -46,22 +67,7 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
     const pinchToZoom = (e: WheelEvent) => {
       e.preventDefault();
 
-      const { startX, endX } = currentDomain.current;
-      const range = endX-startX;
-
-      const center = startX + Math.round(range/2);
-
-      let newRange: number;
-      if (e.deltaY < 0) {
-        newRange = Math.max(10, Math.floor(range*0.9));
-      }
-      else {
-        newRange = Math.min(data.length-1, Math.floor(range * 1.1));
-      }
-      const newStart = Math.max(0, Math.floor(center-newRange/2));
-      const newEnd = Math.min(data.length-1, Math.floor(center+newRange/2));
-      setStartX(newStart);
-      setEndX(newEnd);
+      zoom(e.deltaY < 0);
     }
     // Graph-only listener
     const detectMouseDown = (e: MouseEvent) => {
@@ -190,17 +196,41 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
 
   
   const slicedData = data.slice(startX, endX + 1);
+  const zoomPercentage = 100 - Math.round(100 * slicedData.length/data.length);
 
   return (
     <div ref = {graphContainer} className="h-full w-full p-4 bg-white border border-t-0 rounded-b-lg flex flex-col **:cursor-grab **:active:cursor-grabbing">
-      <div className="flex justify-between items-center mb-2 px-2 text-xs text-slate-500">
-        <span>Zoomed view: {slicedData.length} of {data.length} days</span>
+      <div className="flex justify-between items-center pb-4 text-xs text-slate-500">
         <button 
-          onClick={() => { setStartX(0); setEndX(data.length - 1); }}
-          className="hover:text-slate-800 underline cursor-pointer"
-        >
-          Reset Zoom
+            onClick={() => { setStartX(0); setEndX(data.length - 1); }}
+            className="flex items-center justify-center border border-slate-300 rounded text-slate-600 cursor-pointer! h-7 w-7 hover:bg-slate-300 font-mono"
+            title="Reset View (Home)"
+          >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="w-3.5 h-3.5" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
         </button>
+        <div className = "flex items-center border border-slate-300 rounded text-slate-600">
+          <button onClick={() => zoom(true)} className="cursor-pointer! h-7 w-7 hover:bg-slate-300 font-mono">+</button>
+          <span className = "cursor-default! flex items-center justify-center h-7 w-7 border-x border-slate-300 min-w-15">
+            {
+            data.length > 0 
+            ? (endX-startX <= MINIMUM_POINTS) ? 100 : zoomPercentage
+            : 0
+            }%
+          </span>
+          <button onClick={() => zoom(false)} className="cursor-pointer! h-7 w-7 hover:bg-slate-300 font-mono">-</button>
+        </div>
       </div>
       
       <div className="w-full h-full min-h-75">
