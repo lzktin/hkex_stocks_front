@@ -63,32 +63,62 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
       cancelAnimationFrame(animId.current);
       animId.current = null;
     }
-    // Graph-only listener
-    const pinchToZoom = (e: WheelEvent) => {
-      e.preventDefault();
 
-      zoom(e.deltaY < 0);
+    // Horizontal Graph Scroll Helpers
+    const startScroll = (x: number) => {
+      if (animId.current != null) {
+          cancelAnimationFrame(animId.current);
+          animId.current = null;
+        }
+        prevTime.current = performance.now();
+
+        graphScrolling.current = true;
+        mouseX.current = x;
+        prevMouseX.current = x;
+        mouseSpeed.current = 0;
+        windowOnClick.current = { ...currentDomain.current };
     }
-    // Graph-only listener
-    const detectMouseDown = (e: MouseEvent) => {
-      if (e.button !== 0) 
+
+    const scroll = (x: number) => {
+      if (graphScrolling.current == false)
         return;
 
-      if (animId.current != null) {
-        cancelAnimationFrame(animId.current);
-        animId.current = null;
-      }
-      prevTime.current = performance.now();
+      const now = performance.now();
+      const dx = x - prevMouseX.current;
+      const dt = now - prevTime.current;
 
-      graphScrolling.current = true;
-      mouseX.current = e.clientX;
-      prevMouseX.current = e.clientX;
-      mouseSpeed.current = 0;
-      windowOnClick.current = { ...currentDomain.current };
-    };
-    
-    // Entire window listener
-    const detectMouseUp = () => {
+      if (dt > 0) {
+        mouseSpeed.current = dx / dt; // 
+      }
+
+      prevMouseX.current = x;
+      prevTime.current = now;
+      
+      const { startX, endX } = windowOnClick.current;
+      const range = endX - startX;
+      const mouseMove = x - mouseX.current;
+
+      const currentDimension = currentContainer.getBoundingClientRect();
+      const chartWidth = currentDimension.width - (GRAPH_PADDING * 2);
+
+      const offset = -Math.round(mouseMove / (chartWidth / range));
+
+      let newStart = startX + offset;
+      let newEnd = endX + offset;
+
+      if (newStart < 0) {
+        newStart = 0;
+        newEnd = range;
+      } else if (newEnd >= data.length) {
+        newEnd = data.length - 1;
+        newStart = Math.max(0, data.length - 1 - range);
+      }
+
+      setStartX(newStart);
+      setEndX(newEnd);
+    }
+
+    const endScroll = () => {
       // Prevent false trigger outside graph
       if (graphScrolling.current == false)
         return;
@@ -133,52 +163,45 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
       };
 
       animId.current = requestAnimationFrame(step);
-
     }
-    // This is a window listener
-    const dragToScroll = (e: MouseEvent) => {
-      if (graphScrolling.current == false)
+
+    // Desktop Listeners
+    const pinchToZoom = (e: WheelEvent) => {
+      e.preventDefault();
+
+      zoom(e.deltaY < 0);
+    }
+    const detectMouseScroll = (e: MouseEvent) => {
+      if (e.button !== 0) 
         return;
 
-      const now = performance.now();
-      const dx = e.clientX - prevMouseX.current;
-      const dt = now - prevTime.current;
-
-      if (dt > 0) {
-        mouseSpeed.current = dx / dt; // 
-      }
-
-      prevMouseX.current = e.clientX;
-      prevTime.current = now;
-      
-      const { startX, endX } = windowOnClick.current;
-      const range = endX - startX;
-      const mouseMove = e.clientX - mouseX.current;
-
-      const currentDimension = currentContainer.getBoundingClientRect();
-      const chartWidth = currentDimension.width - (GRAPH_PADDING * 2);
-
-      const offset = -Math.round(mouseMove / (chartWidth / range));
-
-      let newStart = startX + offset;
-      let newEnd = endX + offset;
-
-      if (newStart < 0) {
-        newStart = 0;
-        newEnd = range;
-      } else if (newEnd >= data.length) {
-        newEnd = data.length - 1;
-        newStart = Math.max(0, data.length - 1 - range);
-      }
-
-      setStartX(newStart);
-      setEndX(newEnd);
+      startScroll(e.clientX);
     };
+    const dragToScroll = (e: MouseEvent) => {
+      scroll(e.clientX);
+    };
+    // Mobile Listeners
+    const detectTouchScroll = (e: TouchEvent) => {
+      if (e.touches.length !== 1)
+        return;
+
+      startScroll(e.touches[0].clientX);
+    }
+    const touchToScroll = (e: TouchEvent) => {
+      if (e.touches.length !== 1)
+        return;
+
+      scroll(e.touches[0].clientX);
+    }
 
     currentContainer.addEventListener('wheel', pinchToZoom, {passive: false});
-    currentContainer.addEventListener('mousedown', detectMouseDown);
-    window.addEventListener('mouseup', detectMouseUp);
+    currentContainer.addEventListener('mousedown', detectMouseScroll);
+    window.addEventListener('mouseup', endScroll);
     window.addEventListener('mousemove', dragToScroll);
+
+    currentContainer.addEventListener('touchstart', detectTouchScroll);
+    window.addEventListener('touchmove', touchToScroll);
+    window.addEventListener('touchend', endScroll);
 
     return () => {
       if (animId.current !== null) {
@@ -186,9 +209,13 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
       }
 
       currentContainer.removeEventListener('wheel', pinchToZoom);
-      currentContainer.removeEventListener('mousedown', detectMouseDown);
-      window.removeEventListener('mouseup', detectMouseUp);
+      currentContainer.removeEventListener('mousedown', detectMouseScroll);
       window.removeEventListener('mousemove', dragToScroll);
+      window.removeEventListener('mouseup', endScroll);
+
+      currentContainer.removeEventListener('touchstart', detectTouchScroll);
+      window.removeEventListener('touchmove', touchToScroll);
+      window.removeEventListener('touchend', endScroll);
     };
 
   }, [data.length])
