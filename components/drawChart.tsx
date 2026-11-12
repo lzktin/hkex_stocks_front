@@ -222,7 +222,7 @@ export function DrawChart({ data }: {data: StockReturn[] }) {
         </button>
         <div className = "flex items-center border border-slate-300 rounded text-slate-600">
           <button onClick={() => zoom(true)} className="cursor-pointer! h-7 w-7 hover:bg-slate-300 font-mono">+</button>
-          <span className = "cursor-default! flex items-center justify-center h-7 w-7 border-x border-slate-300 min-w-15">
+          <span className = "cursor-default! flex items-center justify-center border-x border-slate-300 min-w-15 h-7">
             {
             data.length > 0 
             ? (endX-startX <= MINIMUM_POINTS) ? 100 : zoomPercentage
