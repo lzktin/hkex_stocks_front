@@ -101,7 +101,7 @@ export function SearchBar() {
           FetchStock(userInput);
       }}
       placeholder="Search by stock code or company name (e.g. 0005.HK, Tencent, CKH)..."
-      className="bg-transparent outline-none w-full text-sm text-slate-700"
+      className="bg-transparent outline-none w-full md:text-sm text-slate-700 truncate"
       />
     
       {inSearch && (

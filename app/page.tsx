@@ -39,7 +39,7 @@ export default async function HomePage({
 
   return (
     <>
-      <header className="pt-5 px-4 h-20 flex-none">
+      <header className="p-4 h-auto flex-none">
         <SearchBar />
       </header>
       
