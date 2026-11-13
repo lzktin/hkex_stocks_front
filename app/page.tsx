@@ -38,8 +38,8 @@ export default async function HomePage({
     .single();
 
   return (
-    <>
-      <header className="p-4 h-auto flex-none">
+    <div className = "min-h-svh flex flex-col">
+      <header className="p-4 h-auto">
         <SearchBar />
       </header>
       
@@ -84,7 +84,7 @@ export default async function HomePage({
             </div>
         </div>
       </main>
-    </>
+    </div>
   );
 }
 
