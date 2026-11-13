@@ -38,7 +38,7 @@ export default async function HomePage({
     .single();
 
   return (
-    <div className = "flex flex-col">
+    <div className = "flex flex-col h-full overflow-y-auto">
       <header className="p-4">
         <SearchBar />
       </header>
@@ -88,7 +88,6 @@ export default async function HomePage({
   );
 }
 
-// Data fetchers updated to accept the dynamic ticker prop
 async function GetDailyReturns({ ticker }: { ticker: string }) {
   const { data: returns, error } = await supabase
     .from('daily_returns')

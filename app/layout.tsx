@@ -20,9 +20,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-dvh overflow-hidden antialiased`}
     >
-      <body>{children}</body>
+      <body className="h-dvh overflow-hidden flex flex-col">{children}</body>
     </html>
   );
 }
