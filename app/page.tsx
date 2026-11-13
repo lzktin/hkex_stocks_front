@@ -44,7 +44,7 @@ export default async function HomePage({
       </header>
       
       <main className="grid grid-cols-1 px-4 md:px-0 md:grid-cols-[7fr_3fr] md:h-[85vh] gap-4">
-        <div className="h-full flex flex-col py-2 md:pl-4">
+        <div className="flex flex-col py-2 md:pl-4">
           <h2 className="flex justify-between items-center gap-2 border px-2 bg-blue-200 text-sm py-1 rounded-t-lg">
             <span className="bg-black text-white font-bold px-2 py-0.5 rounded tracking-wider">
               {extractedStock?.short_name || "Error: Stock Not Found"}
@@ -60,7 +60,7 @@ export default async function HomePage({
           </div>
         </div>
 
-        <div className="md:min-h-75 grid grid-rows-[1fr_1fr] py-2 md:pr-4 gap-4">
+        <div className="md:min-h-75 grid md:grid-rows-[1fr_1fr] py-2 md:pr-4 gap-4">
             <div className="min-h-0 flex flex-col">
               <h2 className="border px-2 bg-blue-200 text-sm font-semibold py-1.5 rounded-t-lg">
                   Top Correlated
@@ -112,7 +112,7 @@ async function GetStockCorrelations({ ticker, ascending }: { ticker: string; asc
   if (error) return <div className="text-xs text-red-500 p-2">Error loading data: {error.message}</div>;
 
   return (
-    <div className="h-full w-full md:overflow-y-auto bg-white border border-t-0 rounded-b-lg">
+    <div className="md:h-full w-full md:overflow-y-auto bg-white border border-t-0 rounded-b-lg">
       <table className="text-left w-full border-collapse table-fixed">
         <tbody className="text-[12px] divide-y divide-slate-100">
           {correlations?.map((row) => (
