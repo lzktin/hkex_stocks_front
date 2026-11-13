@@ -120,7 +120,7 @@ async function GetStockCorrelations({ ticker, ascending }: { ticker: string; asc
               <td className="py-2 pl-2 font-mono font-medium text-blue-600 w-[28%]">
                 {row.code}
               </td>
-              <td className="py-2 px-2 text-slate-600 w-[47%]">
+              <td className="py-2 px-2 text-slate-600 w-[47%] truncate md:overflow-visible md:whitespace-normal">
                 {row.name}
               </td>
               <td className="py-2 pr-2 font-mono text-right w-[25%]">
